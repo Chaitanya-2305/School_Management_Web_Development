@@ -169,8 +169,10 @@ export async function POST(req) {
     const image = file ? file.name : null;
 
     const pool = getPool();
+
+    // Remove `id` from INSERT query
     await pool.query(
-      `INSERT INTO school (id,name, address, city, state, contact, email_id, image)
+      `INSERT INTO school (name, address, city, state, contact, email_id, image)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [name, address, city, state, contact, email_id, image]
     );
