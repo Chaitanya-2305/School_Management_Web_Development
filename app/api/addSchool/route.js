@@ -156,30 +156,21 @@ import { getPool } from "@/lib/db";
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { name, address, phone } = body;
+    const { name, address, city, state, contact, email_id, image } = body;
 
-    if (!name || !address || !phone) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
-    }
+    // ✅ If image is an object (from file upload), only save the filename
+    const imageValue = typeof image === "object" ? image.name : image;
 
     const pool = getPool();
     const [result] = await pool.query(
-      "INSERT INTO schools (name, address, phone) VALUES (?, ?, ?)",
-      [name, address, phone]
+      `INSERT INTO school (name, address, city, state, contact, email_id, image)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [name, address, city, state, contact, email_id, imageValue]
     );
 
-    return NextResponse.json(
-      { success: true, insertedId: result.insertId },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error("Error inserting school:", error);
-    return NextResponse.json(
-      { error: "Database error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: true, id: result.insertId });
+  } catch (err) {
+    console.error("Add school error:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
