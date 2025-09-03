@@ -170,7 +170,7 @@ export async function POST(req) {
 
     const pool = getPool();
     await pool.query(
-      `INSERT INTO school (name, address, city, state, contact, email_id, image)
+      `INSERT INTO school (id,name, address, city, state, contact, email_id, image)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [name, address, city, state, contact, email_id, image]
     );
