@@ -165,20 +165,14 @@
 // }
 
 
-
-
-
-// File: app/showSchools/page.js
-
-'use client';
-
-import { Suspense } from 'react';
-import ShowSchoolsClient from './ShowSchoolsClient';
+import { Suspense } from "react";
+import ShowSchoolsClient from "./ShowSchoolsClient";
 
 export default function ShowSchoolsPage() {
   return (
-    <Suspense fallback={<div className="text-center mt-12 text-gray-500">Loading...</div>}>
+    <Suspense fallback={<div className="text-center mt-12 text-gray-500">Loading page...</div>}>
       <ShowSchoolsClient />
     </Suspense>
   );
 }
+
