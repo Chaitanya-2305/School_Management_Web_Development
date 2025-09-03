@@ -129,19 +129,34 @@
 // }
 
 
-
-
 import { NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 
 export async function GET() {
   try {
     const pool = getPool();
-    const [rows] = await pool.query("SELECT * FROM school ORDER BY id DESC");
+    const [rows] = await pool.query(
+      `SELECT id, name, address, city, state, contact, email_id, image FROM school`
+    );
     return NextResponse.json(rows, { status: 200 });
   } catch (error) {
-    console.error("Fetch schools error:", error);
-    return NextResponse.json({ error: "Database error" }, { status: 500 });
+    console.error("❌ Show schools error:", error.message, error.stack);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+
+// import { NextResponse } from "next/server";
+// import { getPool } from "@/lib/db";
+
+// export async function GET() {
+//   try {
+//     const pool = getPool();
+//     const [rows] = await pool.query("SELECT * FROM school ORDER BY id DESC");
+//     return NextResponse.json(rows, { status: 200 });
+//   } catch (error) {
+//     console.error("Fetch schools error:", error);
+//     return NextResponse.json({ error: "Database error" }, { status: 500 });
+//   }
+// }
 

@@ -146,12 +146,10 @@
 // }
 
 
-
-
-
-
-import { NextResponse } from "next/server";
-import { getPool } from "@/lib/db";
+import { NextResponse } from "next/server"; // For app router
+import { getPool } from "@/lib/db"; // Your DB connection
+import fs from "fs";
+import path from "path";
 
 export async function POST(req) {
   try {
@@ -164,13 +162,21 @@ export async function POST(req) {
     const contact = formData.get("contact");
     const email_id = formData.get("email_id");
 
-    // Handle image → only save filename for now
     const file = formData.get("image");
-    const image = file ? file.name : null;
+    let image = null;
+
+    if (file && file.size > 0) {
+      const uploadsDir = path.join(process.cwd(), "public/uploads");
+      if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+      const filePath = path.join(uploadsDir, file.name);
+      const buffer = Buffer.from(await file.arrayBuffer());
+      fs.writeFileSync(filePath, buffer);
+
+      image = `/uploads/${file.name}`; // Save relative path in DB
+    }
 
     const pool = getPool();
-
-    // Remove `id` from INSERT query
     await pool.query(
       `INSERT INTO school (name, address, city, state, contact, email_id, image)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -183,3 +189,40 @@ export async function POST(req) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+
+
+
+// import { NextResponse } from "next/server";
+// import { getPool } from "@/lib/db";
+
+// export async function POST(req) {
+//   try {
+//     const formData = await req.formData();
+
+//     const name = formData.get("name");
+//     const address = formData.get("address");
+//     const city = formData.get("city");
+//     const state = formData.get("state");
+//     const contact = formData.get("contact");
+//     const email_id = formData.get("email_id");
+
+//     // Handle image → only save filename for now
+//     const file = formData.get("image");
+//     const image = file ? file.name : null;
+
+//     const pool = getPool();
+
+//     // Remove `id` from INSERT query
+//     await pool.query(
+//       `INSERT INTO school (name, address, city, state, contact, email_id, image)
+//        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+//       [name, address, city, state, contact, email_id, image]
+//     );
+
+//     return NextResponse.json({ message: "School added successfully" }, { status: 200 });
+//   } catch (error) {
+//     console.error("❌ Add school error:", error.message, error.stack);
+//     return NextResponse.json({ error: error.message }, { status: 500 });
+//   }
+// }
