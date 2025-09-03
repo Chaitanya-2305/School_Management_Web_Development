@@ -1,73 +1,58 @@
-// File: app/showSchools/SchoolsListClient.jsx
+// File: app/showSchools/ShowSchoolsClient.js
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 
-const indianStates = [
-  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
-  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
-  "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
-  "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
-  "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"
-];
+const indianStates = [ /* ... your states array ... */ ];
 
-export default function SchoolsListClient() {
+export default function ShowSchoolsClient() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { push } = useRouter();
 
   const [schools, setSchools] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [inputValue, setInputValue] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedState, setSelectedState] = useState('');
 
   useEffect(() => {
     const fetchSchools = async () => {
-      setLoading(true);
       try {
-        const url = new URL('/api/showSchools', window.location.origin);
-        if (searchQuery) url.searchParams.append('search', searchQuery);
-        if (selectedState) url.searchParams.append('state', selectedState);
-
-        const response = await fetch(url.toString());
+        const response = await fetch('/api/getSchool');
         if (!response.ok) throw new Error('Failed to fetch schools');
         const data = await response.json();
-        setSchools(data.schools);
+        setSchools(data);
       } catch (error) {
         console.error('Error fetching data:', error);
-        setSchools([]);
       } finally {
         setLoading(false);
       }
     };
     fetchSchools();
-  }, [searchQuery, selectedState]);
+  }, []);
 
+  // Sync state with URL params
   useEffect(() => {
     const urlSearchQuery = searchParams.get('search') || '';
     const urlSelectedState = searchParams.get('state') || '';
-    setInputValue(urlSearchQuery);
     setSearchQuery(urlSearchQuery);
     setSelectedState(urlSelectedState);
   }, [searchParams]);
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      const params = new URLSearchParams(searchParams);
-      if (inputValue) {
-        params.set('search', inputValue);
-      } else {
-        params.delete('search');
-      }
-      push(`${pathname}?${params.toString()}`);
-    }, 300);
-
-    return () => clearTimeout(timeout);
-  }, [inputValue, push, pathname, searchParams]);
+  const handleSearch = (e) => {
+    const query = e.target.value;
+    const params = new URLSearchParams(searchParams);
+    if (query) {
+      params.set('search', query);
+    } else {
+      params.delete('search');
+    }
+    push(`${pathname}?${params.toString()}`);
+  };
 
   const handleFilterState = (e) => {
     const state = e.target.value;
@@ -80,18 +65,33 @@ export default function SchoolsListClient() {
     push(`${pathname}?${params.toString()}`);
   };
 
+  const filteredSchools = schools.filter((school) => {
+    const matchesSearch =
+      (school.name ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (school.address ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (school.city ?? '').toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesState =
+      !selectedState || (school.state ?? '').toLowerCase() === selectedState.toLowerCase();
+
+    return matchesSearch && matchesState;
+  });
+
   if (loading) {
     return <div className="text-center mt-12 text-gray-500">Loading schools...</div>;
   }
 
   return (
-    <>
+    <div className="max-w-6xl mx-auto my-6 p-4">
+      <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">List of Schools</h1>
+
+      {/* Filters */}
       <div className="flex justify-center items-center mb-6 gap-4">
         <input
           type="text"
           placeholder="Search by name, address or city..."
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
+          value={searchQuery}
+          onChange={handleSearch}
           className="w-1/2 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <select
@@ -107,11 +107,15 @@ export default function SchoolsListClient() {
           ))}
         </select>
       </div>
-      {schools.length === 0 ? (
-        <div className="text-center mt-12 text-gray-500">No schools found matching your criteria.</div>
+
+      {/* Results */}
+      {filteredSchools.length === 0 ? (
+        <div className="text-center mt-12 text-gray-500">
+          No schools found matching your criteria.
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {schools.map((school) => (
+          {filteredSchools.map((school) => (
             <div
               key={school.id}
               className="bg-white rounded-lg shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105"
@@ -147,6 +151,6 @@ export default function SchoolsListClient() {
           ))}
         </div>
       )}
-    </>
+    </div>
   );
 }
