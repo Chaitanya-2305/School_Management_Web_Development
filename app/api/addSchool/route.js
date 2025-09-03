@@ -146,10 +146,17 @@
 // }
 
 
-import { NextResponse } from "next/server"; // For app router
-import { getPool } from "@/lib/db"; // Your DB connection
-import fs from "fs";
-import path from "path";
+import { NextResponse } from "next/server";
+import { getPool } from "@/lib/db";
+import { v2 as cloudinary } from "cloudinary";
+import { PassThrough } from "stream";
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export async function POST(req) {
   try {
@@ -163,24 +170,30 @@ export async function POST(req) {
     const email_id = formData.get("email_id");
 
     const file = formData.get("image");
-    let image = null;
+    let imageUrl = null;
 
     if (file && file.size > 0) {
-      const uploadsDir = path.join(process.cwd(), "public/uploads");
-      if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-
-      const filePath = path.join(uploadsDir, file.name);
       const buffer = Buffer.from(await file.arrayBuffer());
-      fs.writeFileSync(filePath, buffer);
+      const stream = new PassThrough();
+      stream.end(buffer);
 
-      image = `/uploads/${file.name}`; // Save relative path in DB
+      imageUrl = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { resource_type: "image" },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result.secure_url);
+          }
+        );
+        stream.pipe(uploadStream);
+      });
     }
 
     const pool = getPool();
     await pool.query(
       `INSERT INTO school (name, address, city, state, contact, email_id, image)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [name, address, city, state, contact, email_id, image]
+      [name, address, city, state, contact, email_id, imageUrl]
     );
 
     return NextResponse.json({ message: "School added successfully" }, { status: 200 });
@@ -189,6 +202,7 @@ export async function POST(req) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
 
 
 
