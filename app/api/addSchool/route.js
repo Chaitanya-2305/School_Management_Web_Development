@@ -106,41 +106,77 @@
 
 
 
-import { NextResponse } from "next/server";
+// import { NextResponse } from "next/server";
 
-let schools = []; // temporary in-memory store (resets on redeploy)
+// let schools = []; // temporary in-memory store (resets on redeploy)
+
+// export async function POST(req) {
+//   try {
+//     // Parse form data (supports file upload)
+//     const formData = await req.formData();
+
+//     const school = {
+//       id: Date.now(),
+//       name: formData.get("name"),
+//       address: formData.get("address"),
+//       city: formData.get("city"),
+//       state: formData.get("state"),
+//       contact: formData.get("contact"),
+//       email_id: formData.get("email_id"),
+//       // If file uploaded, get metadata
+//       image: formData.get("image") ? formData.get("image").name : null,
+//     };
+
+//     // ✅ Basic validation
+//     if (!school.name || !school.address || !school.city || !school.state || !school.contact || !school.email_id) {
+//       return NextResponse.json({ error: "All fields are required" }, { status: 400 });
+//     }
+
+//     schools.push(school);
+
+//     return NextResponse.json({ message: "School added successfully", data: school }, { status: 201 });
+//   } catch (error) {
+//     console.error("Error in POST /api/addSchool:", error);
+//     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+//   }
+// }
+
+// export async function GET() {
+//   return NextResponse.json({ data: schools });
+// }
+
+
+
+
+
+
+import { NextResponse } from "next/server";
+import { getConnection } from "@/lib/db";
 
 export async function POST(req) {
   try {
-    // Parse form data (supports file upload)
     const formData = await req.formData();
 
-    const school = {
-      id: Date.now(),
-      name: formData.get("name"),
-      address: formData.get("address"),
-      city: formData.get("city"),
-      state: formData.get("state"),
-      contact: formData.get("contact"),
-      email_id: formData.get("email_id"),
-      // If file uploaded, get metadata
-      image: formData.get("image") ? formData.get("image").name : null,
-    };
+    const name = formData.get("name");
+    const address = formData.get("address");
+    const city = formData.get("city");
+    const state = formData.get("state");
+    const contact = formData.get("contact");
+    const email_id = formData.get("email_id");
+    const image = formData.get("image"); // Handle upload properly later
 
-    // ✅ Basic validation
-    if (!school.name || !school.address || !school.city || !school.state || !school.contact || !school.email_id) {
-      return NextResponse.json({ error: "All fields are required" }, { status: 400 });
-    }
+    const conn = await getConnection();
 
-    schools.push(school);
+    const [result] = await conn.execute(
+      "INSERT INTO schools (name, address, city, state, contact, email_id, image) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [name, address, city, state, contact, email_id, image ? image.name : null]
+    );
 
-    return NextResponse.json({ message: "School added successfully", data: school }, { status: 201 });
+    await conn.end();
+
+    return NextResponse.json({ message: "School added successfully!" }, { status: 201 });
   } catch (error) {
-    console.error("Error in POST /api/addSchool:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error("Error inserting school:", error);
+    return NextResponse.json({ error: "Failed to add school" }, { status: 500 });
   }
-}
-
-export async function GET() {
-  return NextResponse.json({ data: schools });
 }

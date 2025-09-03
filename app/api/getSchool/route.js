@@ -89,41 +89,62 @@
 
 
 
-import { NextResponse } from "next/server";
+// import { NextResponse } from "next/server";
 
-// Reuse the in-memory schools array (temporary)
-let schools = [];
+// // Reuse the in-memory schools array (temporary)
+// let schools = [];
+
+// export async function GET() {
+//   try {
+//     return NextResponse.json(schools, { status: 200 });
+//   } catch (error) {
+//     console.error("Error fetching schools:", error);
+//     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+//   }
+// }
+
+// // Allow POST here too (so both /addSchool and /getSchool can save)
+// export async function POST(req) {
+//   try {
+//     const formData = await req.formData();
+
+//     const school = {
+//       id: Date.now(),
+//       name: formData.get("name"),
+//       address: formData.get("address"),
+//       city: formData.get("city"),
+//       state: formData.get("state"),
+//       contact: formData.get("contact"),
+//       email_id: formData.get("email_id"),
+//       image: formData.get("image") ? formData.get("image").name : null,
+//     };
+
+//     schools.push(school);
+
+//     return NextResponse.json({ message: "School added successfully", data: school }, { status: 201 });
+//   } catch (error) {
+//     console.error("Error adding school:", error);
+//     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+//   }
+// }
+
+
+
+
+
+
+import { NextResponse } from "next/server";
+import { getConnection } from "@/lib/db";
 
 export async function GET() {
   try {
-    return NextResponse.json(schools, { status: 200 });
+    const conn = await getConnection();
+    const [rows] = await conn.execute("SELECT * FROM schools");
+    await conn.end();
+
+    return NextResponse.json(rows, { status: 200 });
   } catch (error) {
     console.error("Error fetching schools:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-  }
-}
-
-// Allow POST here too (so both /addSchool and /getSchool can save)
-export async function POST(req) {
-  try {
-    const formData = await req.formData();
-
-    const school = {
-      id: Date.now(),
-      name: formData.get("name"),
-      address: formData.get("address"),
-      city: formData.get("city"),
-      state: formData.get("state"),
-      contact: formData.get("contact"),
-      email_id: formData.get("email_id"),
-      image: formData.get("image") ? formData.get("image").name : null,
-    };
-
-    schools.push(school);
-
-    return NextResponse.json({ message: "School added successfully", data: school }, { status: 201 });
-  } catch (error) {
-    console.error("Error adding school:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch schools" }, { status: 500 });
   }
 }
