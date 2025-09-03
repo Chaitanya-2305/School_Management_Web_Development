@@ -131,20 +131,20 @@
 
 
 
-
-
 import { NextResponse } from "next/server";
-import { getConnection } from "@/lib/db";
+import { getPool } from "@/lib/db";
 
 export async function GET() {
   try {
-    const conn = await getConnection();
-    const [rows] = await conn.execute("SELECT * FROM schools");
-    await conn.end();
+    const pool = getPool();
+    const [rows] = await pool.query("SELECT * FROM schools");
 
     return NextResponse.json(rows, { status: 200 });
   } catch (error) {
     console.error("Error fetching schools:", error);
-    return NextResponse.json({ error: "Failed to fetch schools" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Database error" },
+      { status: 500 }
+    );
   }
 }

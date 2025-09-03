@@ -151,32 +151,35 @@
 
 
 import { NextResponse } from "next/server";
-import { getConnection } from "@/lib/db";
+import { getPool } from "@/lib/db";
 
 export async function POST(req) {
   try {
-    const formData = await req.formData();
+    const body = await req.json();
+    const { name, address, phone } = body;
 
-    const name = formData.get("name");
-    const address = formData.get("address");
-    const city = formData.get("city");
-    const state = formData.get("state");
-    const contact = formData.get("contact");
-    const email_id = formData.get("email_id");
-    const image = formData.get("image"); // Handle upload properly later
+    if (!name || !address || !phone) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
 
-    const conn = await getConnection();
-
-    const [result] = await conn.execute(
-      "INSERT INTO schools (name, address, city, state, contact, email_id, image) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [name, address, city, state, contact, email_id, image ? image.name : null]
+    const pool = getPool();
+    const [result] = await pool.query(
+      "INSERT INTO schools (name, address, phone) VALUES (?, ?, ?)",
+      [name, address, phone]
     );
 
-    await conn.end();
-
-    return NextResponse.json({ message: "School added successfully!" }, { status: 201 });
+    return NextResponse.json(
+      { success: true, insertedId: result.insertId },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Error inserting school:", error);
-    return NextResponse.json({ error: "Failed to add school" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Database error" },
+      { status: 500 }
+    );
   }
 }
