@@ -155,22 +155,30 @@ import { getPool } from "@/lib/db";
 
 export async function POST(req) {
   try {
-    const body = await req.json();
-    const { name, address, city, state, contact, email_id, image } = body;
+    // ✅ Parse multipart form instead of JSON
+    const formData = await req.formData();
 
-    // ✅ If image is an object (from file upload), only save the filename
-    const imageValue = typeof image === "object" ? image.name : image;
+    const name = formData.get("name");
+    const address = formData.get("address");
+    const city = formData.get("city");
+    const state = formData.get("state");
+    const contact = formData.get("contact");
+    const email_id = formData.get("email_id");
+
+    // ✅ File handling (just save filename in DB for now)
+    const file = formData.get("image");
+    const image = file ? file.name : null;
 
     const pool = getPool();
-    const [result] = await pool.query(
+    await pool.query(
       `INSERT INTO school (name, address, city, state, contact, email_id, image)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [name, address, city, state, contact, email_id, imageValue]
+      [name, address, city, state, contact, email_id, image]
     );
 
-    return NextResponse.json({ success: true, id: result.insertId });
-  } catch (err) {
-    console.error("Add school error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ message: "School added successfully" }, { status: 200 });
+  } catch (error) {
+    console.error("Add school error:", error);
+    return NextResponse.json({ error: "Database error" }, { status: 500 });
   }
 }
