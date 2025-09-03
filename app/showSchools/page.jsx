@@ -168,8 +168,9 @@
 import { Suspense } from "react";
 import ShowSchoolsClient from "./ShowSchoolsClient";
 
-// 👇 Force this page to be rendered on the client, not prerendered
+// ⛔ Stop Next.js from prerendering this page at build
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 export default function ShowSchoolsPage() {
   return (
@@ -178,5 +179,6 @@ export default function ShowSchoolsPage() {
     </Suspense>
   );
 }
+
 
 
