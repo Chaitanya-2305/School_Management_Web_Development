@@ -168,11 +168,15 @@
 import { Suspense } from "react";
 import ShowSchoolsClient from "./ShowSchoolsClient";
 
+// 👇 Force this page to be rendered on the client, not prerendered
+export const dynamic = "force-dynamic";
+
 export default function ShowSchoolsPage() {
   return (
-    <Suspense fallback={<div className="text-center mt-12 text-gray-500">Loading page...</div>}>
+    <Suspense fallback={<div className="text-center mt-12 text-gray-500">Loading...</div>}>
       <ShowSchoolsClient />
     </Suspense>
   );
 }
+
 
