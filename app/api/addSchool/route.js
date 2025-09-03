@@ -155,7 +155,6 @@ import { getPool } from "@/lib/db";
 
 export async function POST(req) {
   try {
-    // ✅ Parse multipart form instead of JSON
     const formData = await req.formData();
 
     const name = formData.get("name");
@@ -165,7 +164,7 @@ export async function POST(req) {
     const contact = formData.get("contact");
     const email_id = formData.get("email_id");
 
-    // ✅ File handling (just save filename in DB for now)
+    // Handle image → only save filename for now
     const file = formData.get("image");
     const image = file ? file.name : null;
 
@@ -178,7 +177,7 @@ export async function POST(req) {
 
     return NextResponse.json({ message: "School added successfully" }, { status: 200 });
   } catch (error) {
-    console.error("Add school error:", error);
-    return NextResponse.json({ error: "Database error" }, { status: 500 });
+    console.error("❌ Add school error:", error.message, error.stack);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
