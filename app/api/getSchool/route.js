@@ -1,23 +1,3 @@
-// import { getPool } from '@/lib/db';
-// import { NextResponse } from 'next/server';
-
-// export async function GET() {
-//     try {
-//         const pool = getPool();
-//         const [schools] = await pool.query('SELECT id, name, address, city, image FROM schools');
-        
-//         return new Response(JSON.stringify(schools), {
-//             headers: { 'Content-Type': 'application/json' },
-//             status: 200,
-//         });
-//     } catch (error) {
-//         console.error('Error fetching schools:', error);
-        
-//         // Return a proper error response from the server
-//         return NextResponse.json({ error: 'Failed to fetch schools' }, { status: 500 });
-//     }
-// }
-
 import { getPool } from '@/lib/db';
 import { NextResponse } from 'next/server';
 
@@ -56,3 +36,5 @@ export async function GET(request) { // <-- Pass the `request` object as a param
         return NextResponse.json({ error: 'Failed to fetch schools' }, { status: 500 });
     }
 }
+
+
