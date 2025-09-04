@@ -1,4 +1,4 @@
-// app/school/[id]/SchoolDetailsClientComponent.js
+// File: app/school/[id]/SchoolDetailsClientComponent.js
 
 'use client';
 
@@ -6,78 +6,93 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
-const Header = ({ currentPage }) => {
-  return (
-    <header className="flex justify-between items-center py-4 px-5 border-b-0 bg-gray-100">
-      <div className="flex items-center gap-2">
-          <h2 className="text-2xl font-bold text-gray-800">School Data Manager</h2>
-      </div>
-      <nav className="flex items-center gap-4">
-        <a 
-          href="/showSchools" 
-          className={`no-underline text-gray-600 ${currentPage === 'showSchools' ? 'font-bold' : ''}`}
-        >
-          Show Schools
-        </a>
-        <a 
-          href="/addSchool" 
-          className={`no-underline text-gray-600 ${currentPage === 'addSchool' ? 'font-bold' : ''}`}
-        >
-          Add School
-        </a>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="cursor-pointer text-gray-600"
-        >
-          <circle cx="12" cy="7" r="4" />
-          <path d="M12 15a8 8 0 0 0-8 8H4a8 8 0 0 0 16 0z" />
-        </svg>
-      </nav>
-    </header>
-  );
-};
+const Header = ({ currentPage }) => (
+  <header className="flex justify-between items-center py-4 px-5 border-b-0 bg-gray-100">
+    <div className="flex items-center gap-2">
+      <h2 className="text-2xl font-bold text-gray-800">School Data Manager</h2>
+    </div>
+    <nav className="flex items-center gap-4">
+      <a
+        href="/showSchools"
+        className={`no-underline text-gray-600 ${currentPage === 'showSchools' ? 'font-bold' : ''}`}
+      >
+        Show Schools
+      </a>
+      <a
+        href="/addSchool"
+        className={`no-underline text-gray-600 ${currentPage === 'addSchool' ? 'font-bold' : ''}`}
+      >
+        Add School
+      </a>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="cursor-pointer text-gray-600"
+      >
+        <circle cx="12" cy="7" r="4" />
+        <path d="M12 15a8 8 0 0 0-8 8H4a8 8 0 0 0 16 0z" />
+      </svg>
+    </nav>
+  </header>
+);
 
-// Now this component receives a resolved 'id' as a regular prop
 export default function SchoolDetailsClientComponent({ id }) {
   const [school, setSchool] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    if (id) {
-      const fetchSchoolDetails = async () => {
-        try {
-          const response = await fetch(`/api/getSchool?id=${id}`);
-          if (!response.ok) {
-            throw new Error('Failed to fetch school details');
+    if (!id) return;
+
+    const fetchSchoolDetails = async () => {
+      try {
+        const response = await fetch(`/api/getSchool?id=${Number(id)}`);
+        if (!response.ok) {
+          if (response.status === 404) {
+            setSchool(null);
+            return;
           }
-          const data = await response.json();
-          setSchool(data);
-        } catch (error) {
-          console.error('Error fetching data:', error);
-        } finally {
-          setLoading(false);
+          throw new Error('Failed to fetch school details');
         }
-      };
-      fetchSchoolDetails();
-    }
+        const data = await response.json();
+        setSchool(data);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSchoolDetails();
   }, [id]);
 
-  if (loading) {
-    return <div className="text-center mt-12 text-gray-500">Loading school details...</div>;
-  }
+  const handleDelete = async () => {
+    if (!window.confirm(`Are you sure you want to delete ${school.name}?`)) return;
 
-  if (!school) {
+    try {
+      const response = await fetch(`/api/deleteSchool/${Number(id)}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete school');
+
+      alert('School deleted successfully!');
+      router.push('/showSchools');
+    } catch (error) {
+      console.error('Error deleting school:', error);
+      alert('Failed to delete school. Please try again.');
+    }
+  };
+
+  if (loading)
+    return <div className="text-center mt-12 text-gray-500">Loading school details...</div>;
+
+  if (!school)
     return <div className="text-center mt-12 text-gray-500">School not found.</div>;
-  }
 
   return (
     <>
@@ -116,8 +131,14 @@ export default function SchoolDetailsClientComponent({ id }) {
             <span className="font-semibold text-gray-800">Email:</span> {school.email_id}
           </div>
         </div>
-        <div className="mt-8 flex justify-end">
-          <button 
+        <div className="mt-8 flex justify-end gap-4">
+          <button
+            onClick={handleDelete}
+            className="bg-red-500 text-white font-bold py-2 px-6 rounded-full shadow-lg hover:bg-red-600 transition-colors duration-300"
+          >
+            Delete
+          </button>
+          <button
             onClick={() => router.back()}
             className="bg-gray-500 text-white font-bold py-2 px-6 rounded-full shadow-lg hover:bg-gray-600 transition-colors duration-300"
           >
