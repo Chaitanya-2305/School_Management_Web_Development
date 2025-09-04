@@ -25,9 +25,11 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Make placeholder black on mobile screens */
+/* globals.css */
 @media (max-width: 639px) {
-  .placeholder-black-mobile::placeholder {
-    color: #000 !important;
+  input::placeholder,
+  textarea::placeholder {
+    color: #000 !important; /* black placeholder on mobile */
   }
 }
+
