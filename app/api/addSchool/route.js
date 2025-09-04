@@ -152,10 +152,13 @@
 
 
 
+// File: app/api/addSchool/route.js (Next.js 13+ app router)
+
 import { v2 as cloudinary } from "cloudinary";
 import { getPool } from "@/lib/db";
+import { NextResponse } from "next/server";
 
-// Configure Cloudinary with environment variables
+// Configure Cloudinary from environment variables
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -163,19 +166,26 @@ cloudinary.config({
   secure: true,
 });
 
+// Disable body parser for file uploads
 export const config = {
   api: {
-    bodyParser: false, // required for FormData file upload
+    bodyParser: false,
   },
 };
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+// Helper function to convert ReadableStream to buffer
+async function streamToBuffer(stream) {
+  const chunks = [];
+  for await (const chunk of stream) {
+    chunks.push(chunk);
   }
+  return Buffer.concat(chunks);
+}
 
+export async function POST(req) {
   try {
     const formData = await req.formData();
+
     const name = formData.get("name");
     const address = formData.get("address");
     const city = formData.get("city");
@@ -185,16 +195,37 @@ export default async function handler(req, res) {
 
     const file = formData.get("image");
 
-    // Upload file to Cloudinary
     let imageUrl = null;
+
     if (file && file.size > 0) {
-      const uploadResult = await cloudinary.uploader.upload(file.stream(), {
-        folder: "schools",
+      // Convert file stream to buffer
+      const buffer = await streamToBuffer(file.stream());
+
+      // Upload to Cloudinary
+      const uploadResult = await cloudinary.uploader.upload_stream(
+        { folder: "schools" },
+        (error, result) => {
+          if (error) throw error;
+          return result;
+        }
+      );
+
+      // In Next.js app router, easier way:
+      const upload = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: "schools" },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        uploadStream.end(buffer);
       });
-      imageUrl = uploadResult.secure_url;
+
+      imageUrl = upload.secure_url;
     }
 
-    // Insert school data into MySQL
+    // Insert school into MySQL
     const pool = getPool();
     await pool.query(
       `INSERT INTO school (name, address, city, state, contact, email_id, image)
@@ -202,10 +233,10 @@ export default async function handler(req, res) {
       [name, address, city, state, contact, email_id, imageUrl]
     );
 
-    res.status(200).json({ message: "School added successfully" });
+    return NextResponse.json({ message: "School added successfully" }, { status: 200 });
   } catch (error) {
     console.error("Add school error:", error);
-    res.status(500).json({ error: error.message });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
