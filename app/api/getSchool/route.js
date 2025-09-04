@@ -129,34 +129,76 @@
 // }
 
 
-import { NextResponse } from "next/server";
-import { getPool } from "@/lib/db";
-
-export async function GET() {
-  try {
-    const pool = getPool();
-    const [rows] = await pool.query(
-      `SELECT id, name, address, city, state, contact, email_id, image FROM school`
-    );
-    return NextResponse.json(rows, { status: 200 });
-  } catch (error) {
-    console.error("❌ Show schools error:", error.message, error.stack);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-}
-
-
 // import { NextResponse } from "next/server";
 // import { getPool } from "@/lib/db";
 
 // export async function GET() {
 //   try {
 //     const pool = getPool();
-//     const [rows] = await pool.query("SELECT * FROM school ORDER BY id DESC");
+//     const [rows] = await pool.query(
+//       `SELECT id, name, address, city, state, contact, email_id, image FROM school`
+//     );
 //     return NextResponse.json(rows, { status: 200 });
 //   } catch (error) {
-//     console.error("Fetch schools error:", error);
-//     return NextResponse.json({ error: "Database error" }, { status: 500 });
+//     console.error("❌ Show schools error:", error.message, error.stack);
+//     return NextResponse.json({ error: error.message }, { status: 500 });
 //   }
 // }
+
+
+
+
+import { NextResponse } from "next/server";
+import { getPool } from "@/lib/db";
+
+export async function GET(req) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const idParam = searchParams.get("id");
+    const pool = getPool();
+
+    if (idParam) {
+      // ✅ Fetch single school by ID
+      const id = Number(idParam);
+      if (!id) return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+
+      const [rows] = await pool.query("SELECT * FROM school WHERE id = ?", [id]);
+      if (rows.length === 0) return NextResponse.json(null, { status: 404 });
+
+      return NextResponse.json(rows[0], { status: 200 });
+    } else {
+      // ✅ Fetch all schools
+      const [rows] = await pool.query("SELECT * FROM school");
+      return NextResponse.json(rows, { status: 200 });
+    }
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: "Database error", message: error.message }, { status: 500 });
+  }
+}
+
+
+
+// import { NextResponse } from "next/server";
+// import { getPool } from "@/lib/db";
+
+// export async function GET(req) {
+//   try {
+//     const { searchParams } = new URL(req.url);
+//     const id = searchParams.get("id");
+
+//     if (!id) return NextResponse.json({ error: "No ID provided" }, { status: 400 });
+
+//     const pool = getPool();
+//     const [rows] = await pool.query("SELECT * FROM school WHERE id = ?", [id]);
+
+//     if (rows.length === 0) return NextResponse.json(null, { status: 404 });
+
+//     return NextResponse.json(rows[0], { status: 200 });
+//   } catch (error) {
+//     console.error(error);
+//     return NextResponse.json({ error: "Database error", message: error.message }, { status: 500 });
+//   }
+// }
+
 
