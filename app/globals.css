@@ -24,3 +24,10 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Make placeholder black on mobile screens */
+@media (max-width: 639px) {
+  .placeholder-black-mobile::placeholder {
+    color: #000 !important;
+  }
+}
