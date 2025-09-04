@@ -160,11 +160,12 @@ import { NextResponse } from "next/server";
 
 // Configure Cloudinary from environment variables
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: "dxcfdg1pn",                  // your Cloudinary cloud name
+  api_key: "596943473991387",               // your Cloudinary API key
+  api_secret: "CJhR7o1LYXXXLUWn-7DOMqJRD30", // your Cloudinary API secret
   secure: true,
 });
+
 
 // Disable body parser for file uploads
 export const config = {
