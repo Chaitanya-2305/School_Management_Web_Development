@@ -23,7 +23,7 @@ export async function DELETE(request) {
 
         // Execute the DELETE query
         const [result] = await connection.execute(
-            'DELETE FROM schools WHERE id = ?',
+            'DELETE FROM school WHERE id = ?',
             [id]
         );
 

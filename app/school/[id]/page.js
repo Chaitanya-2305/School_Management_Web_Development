@@ -140,11 +140,7 @@ export default function SchoolDetails() {
 
           const data = await response.json();
 
-          // Make sure image path is relative to /public
-          if (data.image && !data.image.startsWith('/')) {
-            data.image = `/uploads/${data.image}`;
-          }
-
+          // ✅ No need to modify data.image if using Cloudinary URL
           setSchool(data);
         } catch (error) {
           console.error('Error fetching data:', error);
@@ -179,7 +175,7 @@ export default function SchoolDetails() {
       <div className="relative w-full h-80 mb-6 rounded-lg overflow-hidden">
         {school.image ? (
           <Image
-            src={school.image}
+            src={school.image}       // ✅ Use the Cloudinary URL directly
             alt={school.name}
             fill
             style={{ objectFit: 'cover' }}
