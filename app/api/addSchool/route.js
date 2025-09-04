@@ -146,18 +146,36 @@
 // }
 
 
-import { NextResponse } from "next/server";
-import { getPool } from "@/lib/db";
+
+
+
+
+
+
 import { v2 as cloudinary } from "cloudinary";
-import { PassThrough } from "stream";
+import { getPool } from "@/lib/db";
 
-// Initialize Cloudinary from CLOUDINARY_URL
-cloudinary.config({ secure: true });
+// Configure Cloudinary with environment variables
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+});
 
-export async function POST(req) {
+export const config = {
+  api: {
+    bodyParser: false, // required for FormData file upload
+  },
+};
+
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
   try {
     const formData = await req.formData();
-
     const name = formData.get("name");
     const address = formData.get("address");
     const city = formData.get("city");
@@ -166,25 +184,17 @@ export async function POST(req) {
     const email_id = formData.get("email_id");
 
     const file = formData.get("image");
+
+    // Upload file to Cloudinary
     let imageUrl = null;
-
     if (file && file.size > 0) {
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const stream = new PassThrough();
-      stream.end(buffer);
-
-      imageUrl = await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          { resource_type: "image" },
-          (error, result) => {
-            if (error) return reject(error);
-            resolve(result.secure_url);
-          }
-        );
-        stream.pipe(uploadStream);
+      const uploadResult = await cloudinary.uploader.upload(file.stream(), {
+        folder: "schools",
       });
+      imageUrl = uploadResult.secure_url;
     }
 
+    // Insert school data into MySQL
     const pool = getPool();
     await pool.query(
       `INSERT INTO school (name, address, city, state, contact, email_id, image)
@@ -192,19 +202,22 @@ export async function POST(req) {
       [name, address, city, state, contact, email_id, imageUrl]
     );
 
-    return NextResponse.json({ message: "School added successfully" }, { status: 200 });
+    res.status(200).json({ message: "School added successfully" });
   } catch (error) {
-    console.error("❌ Add school error:", error.message, error.stack);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Add school error:", error);
+    res.status(500).json({ error: error.message });
   }
 }
 
 
 
-
-
 // import { NextResponse } from "next/server";
 // import { getPool } from "@/lib/db";
+// import { v2 as cloudinary } from "cloudinary";
+// import { PassThrough } from "stream";
+
+// // Initialize Cloudinary from CLOUDINARY_URL
+// cloudinary.config({ secure: true });
 
 // export async function POST(req) {
 //   try {
@@ -217,17 +230,31 @@ export async function POST(req) {
 //     const contact = formData.get("contact");
 //     const email_id = formData.get("email_id");
 
-//     // Handle image → only save filename for now
 //     const file = formData.get("image");
-//     const image = file ? file.name : null;
+//     let imageUrl = null;
+
+//     if (file && file.size > 0) {
+//       const buffer = Buffer.from(await file.arrayBuffer());
+//       const stream = new PassThrough();
+//       stream.end(buffer);
+
+//       imageUrl = await new Promise((resolve, reject) => {
+//         const uploadStream = cloudinary.uploader.upload_stream(
+//           { resource_type: "image" },
+//           (error, result) => {
+//             if (error) return reject(error);
+//             resolve(result.secure_url);
+//           }
+//         );
+//         stream.pipe(uploadStream);
+//       });
+//     }
 
 //     const pool = getPool();
-
-//     // Remove `id` from INSERT query
 //     await pool.query(
 //       `INSERT INTO school (name, address, city, state, contact, email_id, image)
 //        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-//       [name, address, city, state, contact, email_id, image]
+//       [name, address, city, state, contact, email_id, imageUrl]
 //     );
 
 //     return NextResponse.json({ message: "School added successfully" }, { status: 200 });
@@ -236,3 +263,5 @@ export async function POST(req) {
 //     return NextResponse.json({ error: error.message }, { status: 500 });
 //   }
 // }
+
+
