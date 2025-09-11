@@ -145,6 +145,7 @@ import { useState, useEffect } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
+
 export default function AddSchool() {
     const { register, handleSubmit, reset, formState: { errors }, watch } = useForm();
     const [submitting, setSubmitting] = useState(false);
