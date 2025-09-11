@@ -88,13 +88,13 @@
 // }
 
 
-import { v2 as cloudinary } from "cloudinary";
-import { getPool } from "@/lib/db";
-import { NextResponse } from "next/server";
 import { getIronSession } from "iron-session";
 import { sessionOptions } from "@/lib/session";
+import { NextResponse } from "next/server";
+import { getPool } from "@/lib/db";
+import { v2 as cloudinary } from "cloudinary";
 
-// Configure Cloudinary from environment variables
+// Cloudinary config
 cloudinary.config({
   cloud_name: "dxcfdg1pn",                  // your Cloudinary cloud name
   api_key: "596943473991387",               // your Cloudinary API key
@@ -102,35 +102,20 @@ cloudinary.config({
   secure: true,
 });
 
-// Disable body parser for file uploads
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+// Disable body parser for file upload
+export const config = { api: { bodyParser: false } };
 
-// Convert ReadableStream to buffer
 async function streamToBuffer(stream) {
   const chunks = [];
-  for await (const chunk of stream) {
-    chunks.push(chunk);
-  }
+  for await (const chunk of stream) chunks.push(chunk);
   return Buffer.concat(chunks);
 }
 
-export async function POST(req) {
+export async function POST(req, res) {
+  const session = await getIronSession(req, res, sessionOptions);
+  if (!session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   try {
-    // 🔒 Check authentication with iron-session
-    const cookieStore = req.cookies; // Next.js App Router passes Request object
-    const session = await getIronSession(req, sessionOptions);
-
-    if (!session.user) {
-      return NextResponse.json(
-        { error: "Unauthorized: Please log in first." },
-        { status: 401 }
-      );
-    }
-
     const formData = await req.formData();
     const name = formData.get("name");
     const address = formData.get("address");
@@ -141,42 +126,26 @@ export async function POST(req) {
     const file = formData.get("image");
 
     let imageUrl = null;
-
     if (file && file.size > 0) {
       const buffer = await streamToBuffer(file.stream());
-
-      // Cloudinary upload
       const uploadResult = await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          { folder: "schools" },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
+        const uploadStream = cloudinary.uploader.upload_stream({ folder: "schools" }, (err, res) => {
+          if (err) reject(err); else resolve(res);
+        });
         uploadStream.end(buffer);
       });
-
       imageUrl = uploadResult.secure_url;
     }
 
-    // Insert into MySQL
     const pool = getPool();
     await pool.query(
-      `INSERT INTO school (name, address, city, state, contact, email_id, image)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO school (name, address, city, state, contact, email_id, image) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [name, address, city, state, contact, email_id, imageUrl]
     );
 
-    return NextResponse.json(
-      { message: "School added successfully" },
-      { status: 200 }
-    );
+    return NextResponse.json({ message: "School added successfully" });
   } catch (error) {
-    console.error("Add school error:", error);
-    return NextResponse.json(
-      { error: error.message || "Server error" },
-      { status: 500 }
-    );
+    console.error(error);
+    return NextResponse.json({ error: error.message || "Server error" }, { status: 500 });
   }
 }

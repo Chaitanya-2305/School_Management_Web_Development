@@ -141,184 +141,55 @@
 'use client';
 
 import { useForm } from "react-hook-form";
-import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function AddSchool() {
-    const { register, handleSubmit, reset, formState: { errors }, watch } = useForm();
-    const [submitting, setSubmitting] = useState(false);
-    const [message, setMessage] = useState(null);
-    const [loadingAuth, setLoadingAuth] = useState(true);
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm();
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState(null);
 
-    const router = useRouter();
+  useEffect(() => {
+    if (status === "unauthenticated") router.push("/login");
+  }, [status]);
 
-    // --- 🔒 Auth check via API ---
-    useEffect(() => {
-        async function checkAuth() {
-            try {
-                const res = await fetch("/api/auth/check-session");
-                if (res.status !== 200) {
-                    router.push("/login"); // redirect if not logged in
-                } else {
-                    setLoadingAuth(false);
-                }
-            } catch (err) {
-                router.push("/login");
-            }
-        }
-        checkAuth();
-    }, [router]);
+  if (status === "loading" || !session) return <div>Checking authentication…</div>;
 
-    if (loadingAuth) {
-        return <div className="text-center mt-10">Checking authentication…</div>;
-    }
+  const onSubmit = async (data) => {
+    setSubmitting(true);
+    setMessage(null);
+    const formData = new FormData();
+    for (const key in data) formData.append(key, data[key]);
+    if (data.image && data.image.length > 0) formData.append("image", data.image[0]);
 
-    const imageFile = watch("image");
+    try {
+      const res = await fetch("/api/addSchool", { method: "POST", body: formData });
+      const json = await res.json();
+      setMessage(res.ok ? { text: json.message, type: "success" } : { text: json.error, type: "error" });
+      if (res.ok) reset();
+    } catch (err) {
+      setMessage({ text: "Error occurred.", type: "error" });
+    } finally { setSubmitting(false); }
+  };
 
-    const onSubmit = async (data) => {
-        setSubmitting(true);
-        setMessage(null);
-
-        const formData = new FormData();
-        formData.append("name", data.name);
-        formData.append("address", data.address);
-        formData.append("city", data.city);
-        formData.append("state", data.state);
-        formData.append("contact", data.contact);
-        formData.append("email_id", data.email_id);
-
-        if (data.image && data.image.length > 0) {
-            formData.append("image", data.image[0]);
-        }
-
-        try {
-            const res = await fetch("/api/addSchool", { method: "POST", body: formData });
-            const msg = await res.json();
-            setMessage(res.ok 
-                ? { text: msg.message, type: "success" } 
-                : { text: msg.error, type: "error" });
-            if (res.ok) reset();
-        } catch (error) {
-            console.error("Client error:", error);
-            setMessage({ text: "An error occurred. Please try again.", type: "error" });
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    return (
-        <div className="max-w-xl mx-auto my-6 p-4 border border-gray-200 rounded-lg shadow-sm bg-white">
-            <h1 className="text-3xl font-bold mb-3 text-center text-gray-800">Add New School</h1>
-            <p className="text-center mb-5 text-gray-600">
-                Fill in the details below to add a new school to the system.
-            </p>
-
-            {message && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 bg-gray-900 bg-opacity-50">
-                    <div className={`p-6 bg-white rounded-lg shadow-xl text-center max-w-sm border ${message.type === "success" ? "border-green-500" : "border-red-500"}`}>
-                        <p className="mb-4 text-lg font-semibold">{message.text}</p>
-                        <button
-                            onClick={() => setMessage(null)}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                        >
-                            OK
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            <form onSubmit={handleSubmit(onSubmit)} className="grid gap-5">
-                {/* Name */}
-                <div>
-                    <label htmlFor="name" className="block mb-1 font-semibold text-gray-700">School Name</label>
-                    <input 
-                        id="name" 
-                        placeholder="Enter school name"
-                        {...register("name", { required: "Name is required" })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                    />
-                    {errors.name && <small className="text-red-500 block mt-1">{errors.name.message}</small>}
-                </div>
-
-                {/* Address */}
-                <div>
-                    <label htmlFor="address" className="block mb-1 font-semibold text-gray-700">Address</label>
-                    <input 
-                        id="address" 
-                        placeholder="Enter address"
-                        {...register("address", { required: "Address is required" })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                    />
-                    {errors.address && <small className="text-red-500 block mt-1">{errors.address.message}</small>}
-                </div>
-
-                {/* City */}
-                <div>
-                    <label htmlFor="city" className="block mb-1 font-semibold text-gray-700">City</label>
-                    <input 
-                        id="city" 
-                        placeholder="Enter city"
-                        {...register("city", { required: "City is required" })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                    />
-                    {errors.city && <small className="text-red-500 block mt-1">{errors.city.message}</small>}
-                </div>
-
-                {/* State */}
-                <div>
-                    <label htmlFor="state" className="block mb-1 font-semibold text-gray-700">State</label>
-                    <input 
-                        id="state" 
-                        placeholder="Enter state"
-                        {...register("state", { required: "State is required" })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                    />
-                    {errors.state && <small className="text-red-500 block mt-1">{errors.state.message}</small>}
-                </div>
-
-                {/* Contact */}
-                <div>
-                    <label htmlFor="contact" className="block mb-1 font-semibold text-gray-700">Contact</label>
-                    <input 
-                        id="contact" 
-                        placeholder="Enter contact number"
-                        {...register("contact", { required: "Contact is required" })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                    />
-                    {errors.contact && <small className="text-red-500 block mt-1">{errors.contact.message}</small>}
-                </div>
-
-                {/* Email */}
-                <div>
-                    <label htmlFor="email_id" className="block mb-1 font-semibold text-gray-700">Email</label>
-                    <input 
-                        id="email_id" 
-                        placeholder="Enter email"
-                        type="email"
-                        {...register("email_id", { required: "Email is required" })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                    />
-                    {errors.email_id && <small className="text-red-500 block mt-1">{errors.email_id.message}</small>}
-                </div>
-
-                {/* Image Upload */}
-                <div>
-                    <label htmlFor="image" className="block mb-1 font-semibold text-gray-700">School Image</label>
-                    <input 
-                        type="file" 
-                        id="image" 
-                        accept="image/*" 
-                        {...register("image")} 
-                        className="w-full"
-                    />
-                </div>
-
-                <button
-                    disabled={submitting}
-                    className="w-full py-3 bg-blue-600 text-white rounded-md font-bold text-lg transition-colors hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                    {submitting ? "Saving..." : "Add School"}
-                </button>
-            </form>
-        </div>
-    );
+  return (
+    <div className="max-w-xl mx-auto p-4">
+      <h1 className="text-2xl font-bold">Add New School</h1>
+      {message && <div>{message.text}</div>}
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <input {...register("name", { required: true })} placeholder="School Name" />
+        {errors.name && <span>Name required</span>}
+        <input {...register("address", { required: true })} placeholder="Address" />
+        <input {...register("city", { required: true })} placeholder="City" />
+        <input {...register("state", { required: true })} placeholder="State" />
+        <input {...register("contact", { required: true })} placeholder="Contact" />
+        <input {...register("email_id", { required: true })} placeholder="Email" />
+        <input type="file" {...register("image")} />
+        <button disabled={submitting}>{submitting ? "Saving..." : "Add School"}</button>
+      </form>
+    </div>
+  );
 }
