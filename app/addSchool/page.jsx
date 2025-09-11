@@ -142,38 +142,43 @@
 
 import { useForm } from "react-hook-form";
 import { useState, useEffect } from "react";
-import { useSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-
 
 export default function AddSchool() {
     const { register, handleSubmit, reset, formState: { errors }, watch } = useForm();
     const [submitting, setSubmitting] = useState(false);
     const [message, setMessage] = useState(null);
+    const [loadingAuth, setLoadingAuth] = useState(true);
 
-    // --- 🔒 Auth check ---
-    const { data: session, status } = useSession();
     const router = useRouter();
 
+    // --- 🔒 Auth check via API ---
     useEffect(() => {
-        if (status === "unauthenticated") {
-            // redirect to login if not signed in
-            router.push("/login");
+        async function checkAuth() {
+            try {
+                const res = await fetch("/api/auth/check-session");
+                if (res.status !== 200) {
+                    router.push("/login"); // redirect if not logged in
+                } else {
+                    setLoadingAuth(false);
+                }
+            } catch (err) {
+                router.push("/login");
+            }
         }
-    }, [status, router]);
+        checkAuth();
+    }, [router]);
 
-    if (status === "loading") {
+    if (loadingAuth) {
         return <div className="text-center mt-10">Checking authentication…</div>;
     }
 
-    if (!session) return null; // wait for redirect
-
-    // --- existing form logic ---
     const imageFile = watch("image");
 
     const onSubmit = async (data) => {
         setSubmitting(true);
         setMessage(null);
+
         const formData = new FormData();
         formData.append("name", data.name);
         formData.append("address", data.address);
@@ -189,7 +194,9 @@ export default function AddSchool() {
         try {
             const res = await fetch("/api/addSchool", { method: "POST", body: formData });
             const msg = await res.json();
-            setMessage(res.ok ? { text: msg.message, type: "success" } : { text: msg.error, type: "error" });
+            setMessage(res.ok 
+                ? { text: msg.message, type: "success" } 
+                : { text: msg.error, type: "error" });
             if (res.ok) reset();
         } catch (error) {
             console.error("Client error:", error);
@@ -221,17 +228,90 @@ export default function AddSchool() {
             )}
 
             <form onSubmit={handleSubmit(onSubmit)} className="grid gap-5">
-                {/* ---- all your existing input fields ---- */}
                 {/* Name */}
                 <div>
                     <label htmlFor="name" className="block mb-1 font-semibold text-gray-700">School Name</label>
-                    <input id="name" placeholder="Enter school name"
+                    <input 
+                        id="name" 
+                        placeholder="Enter school name"
                         {...register("name", { required: "Name is required" })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    />
                     {errors.name && <small className="text-red-500 block mt-1">{errors.name.message}</small>}
                 </div>
 
-                {/* …keep all remaining fields exactly as in your original code … */}
+                {/* Address */}
+                <div>
+                    <label htmlFor="address" className="block mb-1 font-semibold text-gray-700">Address</label>
+                    <input 
+                        id="address" 
+                        placeholder="Enter address"
+                        {...register("address", { required: "Address is required" })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    />
+                    {errors.address && <small className="text-red-500 block mt-1">{errors.address.message}</small>}
+                </div>
+
+                {/* City */}
+                <div>
+                    <label htmlFor="city" className="block mb-1 font-semibold text-gray-700">City</label>
+                    <input 
+                        id="city" 
+                        placeholder="Enter city"
+                        {...register("city", { required: "City is required" })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    />
+                    {errors.city && <small className="text-red-500 block mt-1">{errors.city.message}</small>}
+                </div>
+
+                {/* State */}
+                <div>
+                    <label htmlFor="state" className="block mb-1 font-semibold text-gray-700">State</label>
+                    <input 
+                        id="state" 
+                        placeholder="Enter state"
+                        {...register("state", { required: "State is required" })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    />
+                    {errors.state && <small className="text-red-500 block mt-1">{errors.state.message}</small>}
+                </div>
+
+                {/* Contact */}
+                <div>
+                    <label htmlFor="contact" className="block mb-1 font-semibold text-gray-700">Contact</label>
+                    <input 
+                        id="contact" 
+                        placeholder="Enter contact number"
+                        {...register("contact", { required: "Contact is required" })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    />
+                    {errors.contact && <small className="text-red-500 block mt-1">{errors.contact.message}</small>}
+                </div>
+
+                {/* Email */}
+                <div>
+                    <label htmlFor="email_id" className="block mb-1 font-semibold text-gray-700">Email</label>
+                    <input 
+                        id="email_id" 
+                        placeholder="Enter email"
+                        type="email"
+                        {...register("email_id", { required: "Email is required" })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                    />
+                    {errors.email_id && <small className="text-red-500 block mt-1">{errors.email_id.message}</small>}
+                </div>
+
+                {/* Image Upload */}
+                <div>
+                    <label htmlFor="image" className="block mb-1 font-semibold text-gray-700">School Image</label>
+                    <input 
+                        type="file" 
+                        id="image" 
+                        accept="image/*" 
+                        {...register("image")} 
+                        className="w-full"
+                    />
+                </div>
 
                 <button
                     disabled={submitting}

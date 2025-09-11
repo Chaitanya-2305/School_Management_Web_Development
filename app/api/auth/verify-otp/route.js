@@ -2,24 +2,38 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 import { sessionOptions } from '@/lib/session';
-import { IronSession } from 'iron-session';
+import { getIronSession } from 'iron-session';
 import { otpStore } from '../request-otp/route';
 
 export async function POST(req) {
-  const { email, otp } = await req.json();
-  const entry = otpStore.get(email);
-  if (!entry || Date.now() > entry.expires)
-    return NextResponse.json({ error: 'OTP expired' }, { status: 400 });
+  try {
+    const { email, otp } = await req.json();
 
-  const valid = await bcrypt.compare(otp, entry.hash);
-  if (!valid) return NextResponse.json({ error: 'Invalid OTP' }, { status: 400 });
+    // Check OTP
+    const entry = otpStore.get(email);
+    if (!entry || Date.now() > entry.expires) {
+      return NextResponse.json({ error: 'OTP expired' }, { status: 400 });
+    }
 
-  otpStore.delete(email);
+    const valid = await bcrypt.compare(otp, entry.hash);
+    if (!valid) {
+      return NextResponse.json({ error: 'Invalid OTP' }, { status: 400 });
+    }
 
-  const cookieStore = cookies();
-  const session = new IronSession(cookieStore, sessionOptions);
-  session.set('user', { email });
-  await session.save();
+    // Delete OTP after verification
+    otpStore.delete(email);
 
-  return NextResponse.json({ ok: true });
+    // Get session using iron-session
+    const cookieStore = cookies();
+    const session = await getIronSession(cookieStore, sessionOptions);
+
+    // Set user in session
+    session.user = { email };
+    await session.save();
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error('OTP verification error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }

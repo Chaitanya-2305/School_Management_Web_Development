@@ -1,10 +1,13 @@
-import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { IronSession } from 'iron-session';
+import { getIronSession } from 'iron-session';
 import { sessionOptions } from '@/lib/session';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 
-export async function POST() {
-  const session = new IronSession(cookies(), sessionOptions);
-  await session.destroy();
+export async function POST(req) {
+  const cookieStore = cookies();
+  const session = await getIronSession(cookieStore, sessionOptions);
+
+  session.destroy();
+
   return NextResponse.json({ ok: true });
 }

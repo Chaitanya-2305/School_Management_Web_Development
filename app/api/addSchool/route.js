@@ -91,15 +91,15 @@
 import { v2 as cloudinary } from "cloudinary";
 import { getPool } from "@/lib/db";
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/route"; // adjust path if needed
+import { getIronSession } from "iron-session";
+import { sessionOptions } from "@/lib/session";
 
 // Configure Cloudinary from environment variables
 cloudinary.config({
-   cloud_name: "dxcfdg1pn",                  // your Cloudinary cloud name
-   api_key: "596943473991387",               // your Cloudinary API key
-   api_secret: "CJhR7o1LYXXXLUWn-7DOMqJRD30", // your Cloudinary API secret
-   secure: true,
+  cloud_name: "dxcfdg1pn",                  // your Cloudinary cloud name
+  api_key: "596943473991387",               // your Cloudinary API key
+  api_secret: "CJhR7o1LYXXXLUWn-7DOMqJRD30", // your Cloudinary API secret
+  secure: true,
 });
 
 // Disable body parser for file uploads
@@ -120,9 +120,11 @@ async function streamToBuffer(stream) {
 
 export async function POST(req) {
   try {
-    // 🔒 Check authentication
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    // 🔒 Check authentication with iron-session
+    const cookieStore = req.cookies; // Next.js App Router passes Request object
+    const session = await getIronSession(req, sessionOptions);
+
+    if (!session.user) {
       return NextResponse.json(
         { error: "Unauthorized: Please log in first." },
         { status: 401 }
@@ -143,7 +145,7 @@ export async function POST(req) {
     if (file && file.size > 0) {
       const buffer = await streamToBuffer(file.stream());
 
-      // Single clean Cloudinary upload
+      // Cloudinary upload
       const uploadResult = await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
           { folder: "schools" },
