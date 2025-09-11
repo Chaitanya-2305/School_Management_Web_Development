@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import sgMail from "@sendgrid/mail";
 
-sgMail.setApiKey('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');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 export const otpStore = new Map();
 
@@ -15,7 +15,7 @@ export async function POST(req) {
 
   await sgMail.send({
     to: email,
-    from: 'syamannaluru@gmail.com',
+    from: process.env.FROM_EMAIL,
     subject: "Your OTP Code",
     text: `Your OTP is ${otp}. It expires in 10 minutes.`,
   });
