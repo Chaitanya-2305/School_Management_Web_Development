@@ -85,7 +85,7 @@ import { NextResponse } from "next/server";
 import { saveOtp } from "../verify-otp/store"; // import helper to store OTP
 
 // Set API key from environment variable
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+sgMail.setApiKey("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");
 
 export async function POST(req) {
   try {
