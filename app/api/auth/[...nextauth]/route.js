@@ -49,7 +49,7 @@ export const authOptions = {
         port: 587,
         auth: {
           user: "apikey", // literal string required by SendGrid
-          pass: "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", // hardcoded SendGrid key
+          pass: "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", // hardcoded SendGrid key
         },
       },
       from: "syamannaluru@gmail.com", // must be verified in SendGrid
