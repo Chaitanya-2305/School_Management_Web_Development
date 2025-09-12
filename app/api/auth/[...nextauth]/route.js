@@ -35,42 +35,6 @@
 
 
 // app/api/auth/[...nextauth]/route.js
-// import NextAuth from "next-auth";
-// import EmailProvider from "next-auth/providers/email";
-// import { PrismaAdapter } from "@next-auth/prisma-adapter";
-// import { prisma } from "../../../../lib/prisma";
-
-// export const authOptions = {
-//   adapter: PrismaAdapter(prisma),
-//   providers: [
-//     EmailProvider({
-//       server: {
-//         host: "smtp.sendgrid.net",
-//         port: 587,
-//         auth: {
-//           user: "apikey", // literal string required by SendGrid
-//           pass: "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", // hardcoded SendGrid key
-//         },
-//       },
-//       from: "syamannaluru@gmail.com", // must be verified in SendGrid
-//     }),
-//   ],
-//   secret: "8Xv25rIH4kSy3vimHW+UaMjsUKpd5ALuLyot/88if1g=", // hardcoded secret
-//   session: {
-//     strategy: "database",
-//   },
-//   pages: {
-//     signIn: "/login",
-//   },
-// };
-
-// const handler = NextAuth(authOptions);
-// export { handler as GET, handler as POST };
-
-
-
-
-// app/api/auth/[...nextauth]/route.js
 import NextAuth from "next-auth";
 import EmailProvider from "next-auth/providers/email";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
@@ -84,24 +48,19 @@ export const authOptions = {
         host: "smtp.sendgrid.net",
         port: 587,
         auth: {
-          user: "apikey",
-          pass: process.env.SENDGRID_API_KEY,   // keep using the env var
+          user: "apikey", // literal string required by SendGrid
+          pass: "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", // hardcoded SendGrid key
         },
       },
-      from: process.env.EMAIL_FROM,
+      from: "syamannaluru@gmail.com", // must be verified in SendGrid
     }),
   ],
-  secret: process.env.NEXTAUTH_SECRET,
-
-  // ✅ Redirect here after successful login
-  callbacks: {
-    async redirect({ url, baseUrl }) {
-      return `${baseUrl}/addSchool`;
-    },
+  secret: "8Xv25rIH4kSy3vimHW+UaMjsUKpd5ALuLyot/88if1g=", // hardcoded secret
+  session: {
+    strategy: "database",
   },
-
   pages: {
-    signIn: "/login",   // login page stays the same
+    signIn: "/login",
   },
 };
 
