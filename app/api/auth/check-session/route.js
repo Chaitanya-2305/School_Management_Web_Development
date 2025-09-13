@@ -10,5 +10,17 @@
 //     return new Response(JSON.stringify({ authenticated: true }), { status: 200 });
 //   } else {
 //     return new Response(JSON.stringify({ authenticated: false }), { status: 401 });
-//   }
+//  
 // }
+
+
+import { getServerSession } from "next-auth";
+import { authOptions } from "../[...nextauth]/route";
+
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (session) {
+    return Response.json({ authenticated: true, user: session.user });
+  }
+  return Response.json({ authenticated: false });
+}

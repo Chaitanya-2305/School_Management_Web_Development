@@ -74,7 +74,7 @@ import { saveOtp } from '@/lib/otpStore';
 import sgMail from '@sendgrid/mail';
 
 // Set SendGrid API key from environment variable
-const SENDGRID_API_KEY = "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";
+const SENDGRID_API_KEY = "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";
 sgMail.setApiKey(SENDGRID_API_KEY);
 export async function POST(req) {
   try {
@@ -110,38 +110,3 @@ export async function POST(req) {
   }
 }
 
-
-
-// import sgMail from "@sendgrid/mail";
-// import { NextResponse } from "next/server";
-// import { saveOtp } from "@/lib/otpStore";
-
-// // **Hardcode your API key here for testing only**
-// const SENDGRID_API_KEY = "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";
-// sgMail.setApiKey(SENDGRID_API_KEY);
-// export async function POST(req) {
-//   try {
-//     const { email } = await req.json();
-//     if (!email) return NextResponse.json({ error: "Email is required" }, { status: 400 });
-
-//     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-//     saveOtp(email, otp);
-
-//     const msg = {
-//       to: email,
-//       from: "syamannaluru@gmail.com", // must be verified in SendGrid
-//       subject: "Your OTP Code",
-//       text: `Your OTP code is: ${otp}`,
-//     };
-
-//     await sgMail.send(msg);
-
-//     if (process.env.NODE_ENV !== "production") console.log(`OTP for ${email}: ${otp}`);
-
-//     return NextResponse.json({ ok: true });
-//   } catch (error) {
-//     console.error("OTP send error:", error);
-//     return NextResponse.json({ error: "Failed to send OTP" }, { status: 500 });
-//   }
-// }
