@@ -1,10 +1,18 @@
-generator client {
-  provider = "prisma-client-js"
-}
+// prisma/schema.prisma
 
 datasource db {
   provider = "mysql"
   url      = "mysql://root:lPWRoWEDJunZKfPczQiYqWaRDVUOVIso@switchback.proxy.rlwy.net:54907/railway"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model OtpCode {
+  email   String @id
+  otp     String
+  expires BigInt
 }
 
 model User {

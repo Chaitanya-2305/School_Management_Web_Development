@@ -27,45 +27,54 @@
 //       body: JSON.stringify({ email, otp }),
 //     });
 //     const json = await res.json();
-//     if (res.ok && json.redirect) {
-//       router.push(json.redirect);     // ➜ /addSchool
+
+//     // ✅ Redirect to /addSchool after success
+//     if (res.ok) {
+//       router.push("/addSchool");
 //     } else {
 //       alert(json.error || "Invalid OTP");
 //     }
 //   };
 
 //   return (
-//     <div className="max-w-sm mx-auto p-4 flex flex-col gap-4">
-//       {step === 1 ? (
-//         <>
-//           <input
-//             type="email"
-//             value={email}
-//             onChange={(e) => setEmail(e.target.value)}
-//             placeholder="Email"
-//             className="border p-2 rounded"
-//           />
-//           <button onClick={requestOtp} className="bg-blue-500 text-white p-2 rounded">
-//             Send OTP
-//           </button>
-//         </>
-//       ) : (
-//         <>
-//           <input
-//             value={otp}
-//             onChange={(e) => setOtp(e.target.value)}
-//             placeholder="Enter OTP"
-//             className="border p-2 rounded"
-//           />
-//           <button onClick={verifyOtp} className="bg-green-500 text-white p-2 rounded">
-//             Verify OTP
-//           </button>
-//         </>
-//       )}
+//     <div className="flex items-center justify-center h-screen bg-gray-50 overflow-hidden">
+//       <div className="max-w-sm w-full p-6 bg-white shadow-md rounded-md flex flex-col gap-4">
+//         {step === 1 ? (
+//           <>
+//             <input
+//               type="email"
+//               value={email}
+//               onChange={(e) => setEmail(e.target.value)}
+//               placeholder="Email"
+//               className="border p-2 rounded w-full"
+//             />
+//             <button
+//               onClick={requestOtp}
+//               className="bg-blue-500 text-white p-2 rounded w-full hover:bg-blue-600"
+//             >
+//               Send OTP
+//             </button>
+//           </>
+//         ) : (
+//           <>
+//             <input
+//               value={otp}
+//               onChange={(e) => setOtp(e.target.value)}
+//               placeholder="Enter OTP"
+//               className="border p-2 rounded w-full"
+//             />
+//             <button
+//               onClick={verifyOtp}
+//               className="bg-green-500 text-white p-2 rounded w-full hover:bg-green-600"
+//             >
+//               Verify OTP
+//             </button>
+//           </>
+//         )}
+//       </div>
 //     </div>
 //   );
 // }
-
 
 
 'use client';
@@ -90,7 +99,7 @@ export default function Login() {
     else alert(json.error || "Failed to send OTP");
   };
 
-  const verifyOtp = async () => {
+  const verifyOtpHandler = async () => {
     const res = await fetch("/api/auth/verify-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -98,7 +107,7 @@ export default function Login() {
     });
     const json = await res.json();
     if (res.ok && json.redirect) {
-      router.push(json.redirect); // ➜ /addSchool
+      router.push(json.redirect); // ✅ Redirect to /addSchool
     } else {
       alert(json.error || "Invalid OTP");
     }
@@ -132,7 +141,7 @@ export default function Login() {
               className="border p-2 rounded w-full"
             />
             <button
-              onClick={verifyOtp}
+              onClick={verifyOtpHandler}
               className="bg-green-500 text-white p-2 rounded w-full hover:bg-green-600"
             >
               Verify OTP
