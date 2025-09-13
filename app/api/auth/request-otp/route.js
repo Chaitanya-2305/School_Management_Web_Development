@@ -46,9 +46,36 @@
 // }
 
 
+// import { NextResponse } from 'next/server';
+// import { saveOtp } from '@/lib/otpStore';
+
+// export async function POST(req) {
+//   try {
+//     const { email } = await req.json();
+//     if (!email) {
+//       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+//     }
+
+//     const code = Math.floor(100000 + Math.random() * 900000).toString();
+//     saveOtp(email, code);
+
+//     console.log(`OTP for ${email}: ${code}`);
+//     return NextResponse.json({ success: true, otp: code });
+//   } catch (err) {
+//     console.error('request-otp error:', err);
+//     return NextResponse.json({ error: 'Server error' }, { status: 500 });
+//   }
+// }
+
+
+
 import { NextResponse } from 'next/server';
 import { saveOtp } from '@/lib/otpStore';
+import sgMail from '@sendgrid/mail';
 
+// Set SendGrid API key from environment variable
+const SENDGRID_API_KEY = "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";
+sgMail.setApiKey(SENDGRID_API_KEY);
 export async function POST(req) {
   try {
     const { email } = await req.json();
@@ -56,17 +83,32 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
+    // Generate 6-digit OTP
     const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Save OTP in memory
     saveOtp(email, code);
 
-    console.log(`OTP for ${email}: ${code}`);
-    return NextResponse.json({ success: true, otp: code });
+    // Send OTP email via SendGrid
+    try {
+      await sgMail.send({
+        to: email,
+        from: 'syamannaluru@gmail.com', // must be verified in SendGrid
+        subject: 'Your OTP Code',
+        text: `Your OTP code is: ${code}`,
+        html: `<p>Your OTP code is: <strong>${code}</strong></p>`,
+      });
+    } catch (emailErr) {
+      console.error('Error sending OTP email:', emailErr);
+      return NextResponse.json({ error: 'Failed to send OTP email' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, message: 'OTP sent to your email' });
   } catch (err) {
     console.error('request-otp error:', err);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
-
 
 
 
